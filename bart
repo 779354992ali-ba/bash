@@ -1,0 +1,1548 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
+
+void main() {
+  runApp(const BishoTopApp());
+}
+
+class BishoTopApp extends StatelessWidget {
+  const BishoTopApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Bisho Top',
+      theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xFF080812),
+        fontFamily: 'Arial',
+        colorScheme: const ColorScheme.dark(
+          primary: Color(0xFF8B35FF),
+          secondary: Color(0xFF21A9FF),
+          surface: Color(0xFF0B0B16),
+        ),
+      ),
+      home: const BishoHomePage(),
+    );
+  }
+}
+
+// ======================================================
+// التطبيق الرئيسي
+// ======================================================
+
+class BishoHomePage extends StatefulWidget {
+  const BishoHomePage({super.key});
+
+  @override
+  State<BishoHomePage> createState() => _BishoHomePageState();
+}
+
+class _BishoHomePageState extends State<BishoHomePage> {
+  int currentIndex = 0;
+
+  final List<Widget> pages = const [
+    HomePage(),
+    LivePage(),
+    RoomsPage(),
+    GamesPage(),
+    ProfilePage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: pages[currentIndex],
+      bottomNavigationBar: _BishoBottomBar(
+        currentIndex: currentIndex,
+        onChanged: (index) {
+          setState(() {
+            currentIndex = index;
+          });
+        },
+      ),
+    );
+  }
+}
+
+class _BishoBottomBar extends StatelessWidget {
+  final int currentIndex;
+  final ValueChanged<int> onChanged;
+
+  const _BishoBottomBar({
+    required this.currentIndex,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      (Icons.home_rounded, Icons.home_outlined, 'الرئيسية'),
+      (Icons.sports_esports_rounded, Icons.sports_esports_outlined, 'الألعاب'),
+      (Icons.live_tv_rounded, Icons.live_tv_outlined, 'البث'),
+      (Icons.play_circle_fill_rounded, Icons.play_circle_outline_rounded, 'الفيديوهات'),
+      (Icons.person_rounded, Icons.person_outline_rounded, 'الملف الشخصي'),
+    ];
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 7),
+        decoration: const BoxDecoration(
+          color: Color(0xFF0E0E19),
+          border: Border(top: BorderSide(color: Color(0xFF1D1D2C))),
+        ),
+        child: Row(
+          children: List.generate(items.length, (index) {
+            final selected = currentIndex == index;
+            final item = items[index];
+            return Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(index),
+                behavior: HitTestBehavior.opaque,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(30),
+                    gradient: selected
+                        ? const LinearGradient(
+                            colors: [Color(0xFF6A35FF), Color(0xFF9D2CFF)],
+                          )
+                        : null,
+                    boxShadow: selected
+                        ? const [
+                            BoxShadow(
+                              color: Color(0x556A35FF),
+                              blurRadius: 18,
+                              spreadRadius: 1,
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        selected ? item.$1 : item.$2,
+                        size: 27,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        item.$3,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: selected ? FontWeight.w900 : FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// الصفحة الرئيسية
+// ======================================================
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  void open(BuildContext context, Widget page) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => page,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: CustomScrollView(
+        slivers: [
+          // العنوان
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 0),
+              child: _NeonHeader(
+                onSearch: () => open(context, const SearchPage()),
+                onNotifications: () => open(context, const NotificationsPage()),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 25),
+          ),
+
+          // ==================================================
+          // البطاقات الرئيسية
+          // ==================================================
+
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 155,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                ),
+                children: [
+                  FeatureCard(
+                    icon: Icons.sports_esports_rounded,
+                    title: 'الألعاب',
+                    subtitle: 'العب واستمتع',
+                    firstColor: const Color(0xFF00B7FF),
+                    secondColor: const Color(0xFF315BFF),
+                    onTap: () => open(context, const GamesPage()),
+                  ),
+                  FeatureCard(
+                    icon: Icons.mic_rounded,
+                    title: 'الغرف الصوتية',
+                    subtitle: 'تحدث وتعرّف على أصدقاء',
+                    firstColor: const Color(0xFF2B5CFF),
+                    secondColor: const Color(0xFFB21DFF),
+                    onTap: () => open(context, const RoomsPage()),
+                  ),
+                  FeatureCard(
+                    icon: Icons.live_tv_rounded,
+                    title: 'البث المباشر',
+                    subtitle: 'شارك لحظاتك',
+                    firstColor: const Color(0xFFFF245A),
+                    secondColor: const Color(0xFFFF3E9A),
+                    onTap: () => open(context, const LivePage()),
+                  ),
+                  FeatureCard(
+                    icon: Icons.movie_creation_rounded,
+                    title: 'الفيديوهات القصيرة',
+                    subtitle: 'اكتشف محتوى جديد',
+                    firstColor: const Color(0xFF6D35FF),
+                    secondColor: const Color(0xFFFF8B35),
+                    onTap: () => open(context, const VideosPage()),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 28),
+          ),
+
+          // ==================================================
+          // الوصول السريع
+          // ==================================================
+
+          const SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: 20,
+              ),
+              child: Text(
+                'الوصول السريع',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 15),
+          ),
+
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20,
+            ),
+            sliver: SliverGrid(
+              delegate: SliverChildListDelegate(
+                [
+                  QuickCard(
+                    icon: Icons.people_alt_rounded,
+                    title: 'الأصدقاء',
+                    color: const Color(0xFF7547FF),
+                    onTap: () {
+                      open(
+                        context,
+                        const FriendsPage(),
+                      );
+                    },
+                  ),
+
+                  QuickCard(
+                    icon: Icons.chat_bubble_rounded,
+                    title: 'المحادثات',
+                    color: const Color(0xFF2B9CFF),
+                    onTap: () {
+                      open(
+                        context,
+                        const ChatsPage(),
+                      );
+                    },
+                  ),
+
+                  QuickCard(
+                    icon: Icons.favorite_rounded,
+                    title: 'المتابَعون',
+                    color: const Color(0xFFFF3E81),
+                    onTap: () {
+                      open(
+                        context,
+                        const FollowersPage(),
+                      );
+                    },
+                  ),
+
+                  QuickCard(
+                    icon: Icons.card_giftcard_rounded,
+                    title: 'الهدايا',
+                    color: const Color(0xFFFF9D2E),
+                    onTap: () {
+                      open(
+                        context,
+                        const GiftsPage(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 1.55,
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 28),
+          ),
+
+          // ==================================================
+          // الفيديوهات القصيرة
+          // ==================================================
+
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20,
+              ),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'فيديوهات قصيرة',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+
+                  GestureDetector(
+                    onTap: () {
+                      open(
+                        context,
+                        const VideosPage(),
+                      );
+                    },
+                    child: const Text(
+                      'عرض الكل',
+                      style: TextStyle(
+                        color: Color(0xFF9A75FF),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 15),
+          ),
+
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: 230,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                ),
+                children: [
+                  ShortVideoCard(
+                    title: 'اكتشف الجديد',
+                    gradient: const [
+                      Color(0xFF3C176F),
+                      Color(0xFFE92CFF),
+                    ],
+                    onTap: () {
+                      open(
+                        context,
+                        const VideosPage(),
+                      );
+                    },
+                  ),
+
+                  ShortVideoCard(
+                    title: 'استمتع مع أصدقائك',
+                    gradient: const [
+                      Color(0xFF092F68),
+                      Color(0xFF21A9FF),
+                    ],
+                    onTap: () {
+                      open(
+                        context,
+                        const VideosPage(),
+                      );
+                    },
+                  ),
+
+                  ShortVideoCard(
+                    title: 'شارك لحظاتك',
+                    gradient: const [
+                      Color(0xFF65152F),
+                      Color(0xFFFF3864),
+                    ],
+                    onTap: () {
+                      open(
+                        context,
+                        const VideosPage(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 25),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NeonHeader extends StatelessWidget {
+  final VoidCallback onSearch;
+  final VoidCallback onNotifications;
+
+  const _NeonHeader({
+    required this.onSearch,
+    required this.onNotifications,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 56,
+          height: 56,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            gradient: const LinearGradient(
+              colors: [Color(0xFF14C8FF), Color(0xFF8B35FF), Color(0xFFFF22D8)],
+            ),
+            boxShadow: const [
+              BoxShadow(color: Color(0x668B35FF), blurRadius: 20, spreadRadius: 1),
+            ],
+          ),
+          child: const Icon(Icons.workspace_premium_rounded, size: 34, color: Colors.white),
+        ),
+        const SizedBox(width: 12),
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _GradientBrandText(),
+              SizedBox(height: 2),
+              Text('Live • Games • Social', style: TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600)),
+              SizedBox(height: 3),
+              Text('اكتشف، تواصل واستمتع', style: TextStyle(color: Colors.white54, fontSize: 12)),
+            ],
+          ),
+        ),
+        HeaderButton(icon: Icons.search_rounded, onTap: onSearch),
+        const SizedBox(width: 7),
+        HeaderButton(icon: Icons.notifications_none_rounded, onTap: onNotifications),
+      ],
+    );
+  }
+}
+
+class _GradientBrandText extends StatelessWidget {
+  const _GradientBrandText();
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (bounds) => const LinearGradient(
+        colors: [Colors.white, Color(0xFFB14DFF)],
+      ).createShader(bounds),
+      child: const Text(
+        'Bisho Top',
+        style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900, color: Colors.white),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// زر علوي
+// ======================================================
+
+class HeaderButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const HeaderButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF151522),
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(15),
+        onTap: onTap,
+        child: SizedBox(
+          width: 48,
+          height: 48,
+          child: Icon(
+            icon,
+            size: 25,
+            color: Colors.white,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// البطاقة الرئيسية
+// ======================================================
+
+class FeatureCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color firstColor;
+  final Color secondColor;
+  final VoidCallback onTap;
+
+  const FeatureCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.firstColor,
+    required this.secondColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 145,
+      margin: const EdgeInsets.symmetric(
+        horizontal: 6,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            firstColor,
+            secondColor,
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: firstColor.withValues(alpha: 0.25),
+            blurRadius: 18,
+            spreadRadius: 1,
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(25),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  icon,
+                  size: 48,
+                  color: Colors.white,
+                ),
+                const Spacer(),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// الوصول السريع
+// ======================================================
+
+class QuickCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final Color color;
+  final VoidCallback onTap;
+
+  const QuickCard({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xFF141420),
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Row(
+          children: [
+            const SizedBox(width: 15),
+
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.16),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Icon(
+                icon,
+                size: 28,
+                color: color,
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// بطاقة فيديو قصيرة في الرئيسية
+// ======================================================
+
+class ShortVideoCard extends StatelessWidget {
+  final String title;
+  final List<Color> gradient;
+  final VoidCallback onTap;
+
+  const ShortVideoCard({
+    super.key,
+    required this.title,
+    required this.gradient,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 155,
+      margin: const EdgeInsets.only(
+        right: 12,
+      ),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: gradient,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: onTap,
+          child: Stack(
+            children: [
+              const Positioned(
+                top: 18,
+                right: 18,
+                child: Icon(
+                  Icons.more_vert,
+                  color: Colors.white70,
+                ),
+              ),
+
+              const Center(
+                child: Icon(
+                  Icons.video_library_rounded,
+                  size: 55,
+                  color: Colors.white24,
+                ),
+              ),
+
+              Positioned(
+                left: 15,
+                right: 15,
+                bottom: 15,
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.18),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.play_arrow_rounded,
+                        size: 25,
+                        color: Colors.white,
+                      ),
+                    ),
+
+                    const SizedBox(width: 9),
+
+                    Expanded(
+                      child: Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// صفحة الفيديوهات القصيرة
+// ======================================================
+
+class VideosPage extends StatelessWidget {
+  const VideosPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final videos = [
+      const VideoData(
+        title: 'اكتشف الجديد في Bisho Top',
+        username: '@bisho_user',
+        likes: 12400,
+        comments: 843,
+        color1: Color(0xFF3C176F),
+        color2: Color(0xFFE92CFF),
+      ),
+      const VideoData(
+        title: 'استمتع مع أصدقائك',
+        username: '@top_creator',
+        likes: 8700,
+        comments: 421,
+        color1: Color(0xFF092F68),
+        color2: Color(0xFF21A9FF),
+      ),
+      const VideoData(
+        title: 'شارك لحظاتك',
+        username: '@bisho_top',
+        likes: 21800,
+        comments: 1200,
+        color1: Color(0xFF65152F),
+        color2: Color(0xFFFF3864),
+      ),
+      const VideoData(
+        title: 'لحظات ممتعة كل يوم',
+        username: '@creator',
+        likes: 6300,
+        comments: 287,
+        color1: Color(0xFF123D36),
+        color2: Color(0xFF00D9A5),
+      ),
+    ];
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        title: const Text(
+          'الفيديوهات',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      body: PageView.builder(
+        scrollDirection: Axis.vertical,
+        itemCount: videos.length,
+        itemBuilder: (context, index) {
+          return ShortVideoScreen(
+            video: videos[index],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ======================================================
+// بيانات الفيديو
+// ======================================================
+
+class VideoData {
+  final String title;
+  final String username;
+  final int likes;
+  final int comments;
+  final Color color1;
+  final Color color2;
+
+  const VideoData({
+    required this.title,
+    required this.username,
+    required this.likes,
+    required this.comments,
+    required this.color1,
+    required this.color2,
+  });
+
+  String get formattedLikes => _formatCount(likes);
+  String get formattedComments => _formatCount(comments);
+}
+
+String _formatCount(int value) {
+  if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(value % 1000000 == 0 ? 0 : 1)}M';
+  if (value >= 1000) return '${(value / 1000).toStringAsFixed(value % 1000 == 0 ? 0 : 1)}K';
+  return value.toString();
+}
+
+// ======================================================
+// شاشة الفيديو القصير
+// ======================================================
+
+class ShortVideoScreen extends StatefulWidget {
+  final VideoData video;
+
+  const ShortVideoScreen({
+    super.key,
+    required this.video,
+  });
+
+  @override
+  State<ShortVideoScreen> createState() =>
+      _ShortVideoScreenState();
+}
+
+class _ShortVideoScreenState extends State<ShortVideoScreen> {
+  late int likeCount;
+  late int commentCount;
+  late bool liked;
+  final List<String> comments = [];
+  final TextEditingController commentController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    likeCount = widget.video.likes;
+    commentCount = widget.video.comments;
+    liked = false;
+  }
+
+  @override
+  void dispose() {
+    commentController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _shareVideo() async {
+    final text = 'شاهد هذا الفيديو على Bisho Top: ${widget.video.title}\n${widget.video.username}';
+    try {
+      await SharePlus.instance.share(ShareParams(text: text));
+    } catch (_) {
+      await Clipboard.setData(ClipboardData(text: text));
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر فتح المشاركة، تم نسخ النص للمشاركة يدويًا')),
+      );
+    }
+  }
+
+  void _addComment() {
+    final text = commentController.text.trim();
+    if (text.isEmpty) return;
+    setState(() {
+      comments.insert(0, text);
+      commentCount++;
+      commentController.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final video = widget.video;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [video.color1, video.color2, const Color(0xFF080812)],
+          stops: const [0.0, 0.58, 1.0],
+        ),
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0.45, -0.25),
+                  radius: 1.15,
+                  colors: [Colors.white.withValues(alpha: 0.10), Colors.transparent],
+                ),
+              ),
+            ),
+          ),
+          const Center(
+            child: Icon(Icons.play_circle_fill_rounded, size: 95, color: Colors.white70),
+          ),
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: 310,
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black87],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 20,
+            right: 95,
+            bottom: 35,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(video.username, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                const SizedBox(height: 10),
+                Text(video.title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                const Row(
+                  children: [
+                    Icon(Icons.music_note_rounded, size: 18),
+                    SizedBox(width: 5),
+                    Text('الصوت الأصلي', style: TextStyle(fontSize: 13)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Positioned(
+            right: 12,
+            bottom: 28,
+            child: Column(
+              children: [
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                    gradient: const LinearGradient(colors: [Color(0xFF8B35FF), Color(0xFFEA36FF)]),
+                  ),
+                  child: const Icon(Icons.person_rounded, size: 30),
+                ),
+                const SizedBox(height: 18),
+                IconButton(
+                  tooltip: 'إعجاب',
+                  onPressed: () {
+                    setState(() {
+                      liked = !liked;
+                      likeCount += liked ? 1 : -1;
+                    });
+                  },
+                  icon: Icon(
+                    liked ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                    size: 38,
+                    color: liked ? Colors.redAccent : Colors.white,
+                  ),
+                ),
+                Text(_formatCount(likeCount), style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 14),
+                IconButton(
+                  tooltip: 'التعليقات',
+                  onPressed: _showComments,
+                  icon: const Icon(Icons.comment_rounded, size: 36),
+                ),
+                Text(_formatCount(commentCount), style: const TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 14),
+                IconButton(
+                  tooltip: 'مشاركة',
+                  onPressed: _shareVideo,
+                  icon: const Icon(Icons.share_rounded, size: 36),
+                ),
+                const Text('مشاركة', style: TextStyle(fontSize: 12)),
+                const SizedBox(height: 8),
+                IconButton(
+                  tooltip: 'المزيد',
+                  onPressed: _showMore,
+                  icon: const Icon(Icons.more_vert_rounded, size: 32),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showComments() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF10101B),
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 6,
+              bottom: MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+            ),
+            child: SizedBox(
+              height: MediaQuery.of(sheetContext).size.height * 0.55,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('التعليقات', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 6),
+                  Text('$commentCount تعليق', style: const TextStyle(color: Colors.white60)),
+                  const SizedBox(height: 14),
+                  Expanded(
+                    child: comments.isEmpty
+                        ? const Center(child: Text('لا توجد تعليقات بعد\nكن أول من يعلّق', textAlign: TextAlign.center, style: TextStyle(color: Colors.white54)))
+                        : ListView.separated(
+                            itemCount: comments.length,
+                            separatorBuilder: (_, __) => const Divider(color: Colors.white10),
+                            itemBuilder: (_, index) => ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
+                              title: const Text('مستخدم Bisho Top', style: TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(comments[index]),
+                            ),
+                          ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: commentController,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _addComment(),
+                    decoration: InputDecoration(
+                      hintText: 'اكتب تعليقًا...',
+                      suffixIcon: IconButton(onPressed: _addComment, icon: const Icon(Icons.send_rounded)),
+                      filled: true,
+                      fillColor: const Color(0xFF222232),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showMore() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF151522),
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.bookmark_border),
+                title: const Text('حفظ الفيديو'),
+                onTap: () => Navigator.pop(sheetContext),
+              ),
+              ListTile(
+                leading: const Icon(Icons.flag_outlined),
+                title: const Text('الإبلاغ'),
+                onTap: () => Navigator.pop(sheetContext),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ======================================================
+// صفحات الأقسام
+// ======================================================
+
+class LivePage extends StatelessWidget {
+  const LivePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'البث المباشر',
+      subtitle:
+          'شاهد البث المباشر وتفاعل مع صناع المحتوى',
+      icon: Icons.live_tv_rounded,
+      color: Color(0xFFFF315B),
+    );
+  }
+}
+
+class RoomsPage extends StatelessWidget {
+  const RoomsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'الغرف الصوتية',
+      subtitle:
+          'ادخل الغرف وتحدث مع الآخرين بالصوت',
+      icon: Icons.mic_rounded,
+      color: Color(0xFF35C8FF),
+    );
+  }
+}
+
+class GamesPage extends StatelessWidget {
+  const GamesPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'الألعاب',
+      subtitle:
+          'مجموعة ألعاب وترفيه داخل Bisho Top',
+      icon: Icons.sports_esports_rounded,
+      color: Color(0xFF00D9A5),
+    );
+  }
+}
+
+class FriendsPage extends StatelessWidget {
+  const FriendsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'الأصدقاء',
+      subtitle:
+          'ابحث عن أصدقائك وتواصل معهم',
+      icon: Icons.people_alt_rounded,
+      color: Color(0xFF7547FF),
+    );
+  }
+}
+
+class ChatsPage extends StatelessWidget {
+  const ChatsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'المحادثات',
+      subtitle:
+          'رسائلك ومحادثاتك مع الآخرين',
+      icon: Icons.chat_bubble_rounded,
+      color: Color(0xFF2B9CFF),
+    );
+  }
+}
+
+class FollowersPage extends StatelessWidget {
+  const FollowersPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'المتابَعون',
+      subtitle:
+          'الأشخاص والحسابات التي تتابعها',
+      icon: Icons.favorite_rounded,
+      color: Color(0xFFFF3E81),
+    );
+  }
+}
+
+class GiftsPage extends StatelessWidget {
+  const GiftsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'الهدايا',
+      subtitle:
+          'الهدايا والعملات سيتم تطويرها لاحقًا',
+      icon: Icons.card_giftcard_rounded,
+      color: Color(0xFFFF9D2E),
+    );
+  }
+}
+
+// ======================================================
+// البحث
+// ======================================================
+
+class SearchPage extends StatelessWidget {
+  const SearchPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'البحث',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: TextField(
+          autofocus: true,
+          decoration: InputDecoration(
+            hintText:
+                'ابحث عن شخص أو فيديو أو غرفة...',
+            prefixIcon: const Icon(
+              Icons.search,
+            ),
+            filled: true,
+            fillColor: const Color(0xFF141420),
+            border: OutlineInputBorder(
+              borderRadius:
+                  BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// الإشعارات
+// ======================================================
+
+class NotificationsPage extends StatelessWidget {
+  const NotificationsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const BishoPage(
+      title: 'الإشعارات',
+      subtitle:
+          'ستظهر هنا إشعارات المتابعين والرسائل والبثوث',
+      icon: Icons.notifications_rounded,
+      color: Color(0xFFFF9D2E),
+    );
+  }
+}
+
+// ======================================================
+// الحساب
+// ======================================================
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'حسابي',
+          style: TextStyle(
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Center(
+            child: Container(
+              width: 110,
+              height: 110,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [
+                    Color(0xFF8B35FF),
+                    Color(0xFFEA36FF),
+                  ],
+                ),
+              ),
+              child: const Icon(
+                Icons.person_rounded,
+                size: 65,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          const Center(
+            child: Text(
+              'مستخدم Bisho Top',
+              style: TextStyle(
+                fontSize: 23,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          ProfileOption(
+            icon: Icons.edit_rounded,
+            title: 'تعديل الملف الشخصي',
+            onTap: () {},
+          ),
+
+          ProfileOption(
+            icon: Icons.settings_rounded,
+            title: 'الإعدادات',
+            onTap: () {},
+          ),
+
+          ProfileOption(
+            icon:
+                Icons.account_balance_wallet_rounded,
+            title: 'المحفظة',
+            onTap: () {},
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ProfileOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  const ProfileOption({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(
+        bottom: 12,
+      ),
+      child: Material(
+        color: const Color(0xFF141420),
+        borderRadius: BorderRadius.circular(18),
+        child: ListTile(
+          onTap: onTap,
+          leading: Icon(
+            icon,
+            color: const Color(0xFF9A75FF),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          trailing: const Icon(
+            Icons.chevron_left_rounded,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ======================================================
+// قالب الصفحات البسيطة
+// ======================================================
+
+class BishoPage extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+
+  const BishoPage({
+    super.key,
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        backgroundColor: const Color(0xFF080812),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(25),
+          child: Column(
+            mainAxisAlignment:
+                MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color:
+                      color.withValues(alpha: 0.15),
+                  border: Border.all(
+                    color:
+                        color.withValues(alpha: 0.5),
+                    width: 2,
+                  ),
+                ),
+                child: Icon(
+                  icon,
+                  size: 65,
+                  color: color,
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.white60,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
